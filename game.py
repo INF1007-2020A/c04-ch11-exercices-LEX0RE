@@ -21,13 +21,18 @@ class Weapon:
 	UNARMED_POWER = 20
 
 	def __init__(self, name, power, min_level):
-		self.name = name
+		self.__name = name
 		self.power = power
 		self.min_level = min_level
 
+	@property
+	def name(self):
+		return self.__name
+
+
 	@classmethod
 	def make_unarmed(cls):
-		return cls("Unarmed", 20, 0)
+		return cls("Unarmed", cls.UNARMED_POWER, 1)
 
 
 class Character:
@@ -41,15 +46,35 @@ class Character:
 	:param level: Le niveau d'expérience du personnage
 	"""
 	def __init__(self, name, max_hp, attack, defense, level):
-		self.name = name
+		self.__name = name
 		self.max_hp = max_hp
 		self.attack = attack
 		self.defense = defense
 		self.level = level
-		self.weapon = Weapon.make_unarmed()
+		self.__weapon = None
 		self.hp = max_hp
 
-	def compute_damage(self, other) -> float:
+	@property
+	def name(self):
+		return self.__name
+		
+	@property
+	def weapon(self):
+		return self.__weapon
+		
+	@weapon.setter
+	def weapon(self, val):
+		if val is None:
+			val = Weapon.make_unarmed()
+		if val.min_level > self.level:
+			raise ValueError(Weapon)
+		self.__weapon = val
+
+	@hp.setter
+	def hp(self, val):
+		self.__hp = utils.clamp(val, 0, self.max_hp)
+
+	def compute_damage(self, other) -> int:
 		crit = 1 + int(random.randint(1, 16) == 1)
 		modifier = crit * random.randint(85, 100) / 100
 		return (((((2 * self.level / 5) + 2) * self.weapon.power * self.attack / other.defense) / 50) + 2) * modifier
@@ -74,12 +99,12 @@ def run_battle(c1, c2):
 	print(c2.name + "is sleeping with the fishes.")
 	return turn
 
+if __name__ == "__main__":
+	c1 = Character("Äpik", 200, 150, 70, 70)
+	c2 = Character("Gämmor", 250, 100, 120, 60)
 
-c1 = Character("Äpik", 200, 150, 70, 70)
-c2 = Character("Gämmor", 250, 100, 120, 60)
+	c1.weapon = Weapon("BFG", 100, 69)
+	c2.weapon = Weapon("Deku Stick", 120, 1)
 
-c1.weapon = Weapon("BFG", 100, 69)
-c2.weapon = Weapon("Deku Stick", 120, 1)
-
-turns = run_battle(c1, c2)
-print(f"The battle ended in {turns} turns.")
+	turns = run_battle(c1, c2)
+	print(f"The battle ended in {turns} turns.")
